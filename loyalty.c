@@ -5,7 +5,7 @@
 #define MAXLEN 19
 /* COP3502C-24Spring 0025 Assignment 4
 Date: 4/3/2024
-This program is written by: Devon Villalona */
+This program is by Devon Villalona */
 
 typedef struct customer {
     char name[MAXLEN + 1];
@@ -250,21 +250,32 @@ void destroyTree(treenode* root) {
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s input_filename\n", argv[0]);
+        return 1;
+    }
+
+    FILE *input_file = fopen(argv[1], "r");
+    if (input_file == NULL) {
+        printf("Error opening file: %s\n", argv[1]);
+        return 1;
+    }
+
     int n, i, points, depth, isNew;
     char command[15], name[MAXLEN + 1];
     treenode* root = NULL;
 
     // Read the number of operations to be performed
-    scanf("%d", &n);
+    fscanf(input_file, "%d", &n);
 
     for (i = 0; i < n; i++) {
         // Read the command to be executed
-        scanf("%s", command);
+        fscanf(input_file, "%s", command);
 
-        // Handle 'add' command: add or update a customer in the tree
+        // Handle commands: add, sub, del, search, count_smaller
         if (strcmp(command, "add") == 0) {
-            scanf("%s %d", name, &points);
+            fscanf(input_file, "%s %d", name, &points);
             customer* c = initializeCustomer(name, points);
             isNew = 0;
             root = addTreeNode(root, c, points, &isNew);
@@ -274,10 +285,8 @@ int main() {
             }
             // Output the new points of the customer
             printf("%s %d\n", name, locateNode(root, name)->cPtr->points);
-        }
-        // Handle 'sub' command: subtract points from a customer
-        else if (strcmp(command, "sub") == 0) {
-            scanf("%s %d", name, &points);
+        } else if (strcmp(command, "sub") == 0) {
+            fscanf(input_file, "%s %d", name, &points);
             treenode* node = locateNode(root, name);
             if (node != NULL) {
                 int newPoints = node->cPtr->points - points;
@@ -287,20 +296,16 @@ int main() {
             } else {
                 printf("%s not found\n", name);
             }
-        }
-        // Handle 'del' command: delete a customer from the tree
-        else if (strcmp(command, "del") == 0) {
-            scanf("%s", name);
+        } else if (strcmp(command, "del") == 0) {
+            fscanf(input_file, "%s", name);
             if (locateNode(root, name)) {
                 root = removeTreeNode(root, name);
                 printf("%s deleted\n", name);
             } else {
                 printf("%s not found\n", name);
             }
-        }
-        // Handle 'search' command: find a customer and display their depth
-        else if (strcmp(command, "search") == 0) {
-            scanf("%s", name);
+        } else if (strcmp(command, "search") == 0) {
+            fscanf(input_file, "%s", name);
             depth = 0;
             points = getNodeDepth(root, name, &depth);
             if (points >= 0) {
@@ -308,17 +313,16 @@ int main() {
             } else {
                 printf("%s not found\n", name);
             }
-        }
-        // Handle 'count_smaller' command: count customers with fewer points
-        else if (strcmp(command, "count_smaller") == 0) {
-            scanf("%s", name);
+        } else if (strcmp(command, "count_smaller") == 0) {
+            fscanf(input_file, "%s", name);
             int count = smallerCount(root, name);
             printf("%d\n", count);
         }
     }
 
     // Sorting customers in the tree in order and outputting them
-    customer** customers = (customer**)malloc(sizeof(customer*) * n);
+    int treeSize = root ? root->size : 0;
+    customer** customers = (customer**)malloc(sizeof(customer*) * treeSize);
     int index = 0;
     collectInOrder(root, customers, &index);
     performQuickSort(customers, 0, index - 1);
@@ -333,5 +337,6 @@ int main() {
     // Free memory allocated for the tree and its nodes
     destroyTree(root);
 
+    fclose(input_file);
     return 0;
 }
